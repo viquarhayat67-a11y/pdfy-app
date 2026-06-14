@@ -20,6 +20,9 @@ app.post('/api/protect', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Missing file or password parameters.' });
     }
 
+    // (Keep existing protect logic)
+
+
     // 1. Load the document into memory
     const pdfDoc = await PDFDocument.load(req.file.buffer);
     
@@ -64,6 +67,51 @@ app.post('/api/protect', upload.single('file'), async (req, res) => {
     console.error('Encryption Pipeline Failure:', err);
     res.status(500).json({ error: `Backend engine failure: ${err.message}` });
   }
+});
+
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { feature, rating, message, email, createdAt, id } = req.body || {};
+
+    if (!feature || typeof feature !== 'string' || !feature.trim()) {
+      return res.status(400).json({ error: 'Missing feature.' });
+    }
+    if (!message || typeof message !== 'string' || message.trim().length < 10) {
+      return res.status(400).json({ error: 'Message must be at least 10 characters.' });
+    }
+    const r = Number(rating);
+    if (!Number.isFinite(r) || r < 1 || r > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5.' });
+    }
+
+    // In-memory capture for now (persisting can be added later)
+    // If you restart the server, data will reset.
+    if (!globalThis.__pdfyFeedbacks) globalThis.__pdfyFeedbacks = [];
+
+    const payload = {
+      id: id || Math.random().toString(36).slice(2),
+      feature: feature.trim(),
+      rating: Math.round(r),
+      message: message.trim(),
+      email: (email || '').toString(),
+      createdAt: createdAt || Date.now(),
+    };
+
+    globalThis.__pdfyFeedbacks.push(payload);
+
+    // Keep last 500 entries
+    globalThis.__pdfyFeedbacks = globalThis.__pdfyFeedbacks.slice(-500);
+
+    return res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('Feedback API failure:', err);
+    return res.status(500).json({ error: 'Backend engine failure.' });
+  }
+});
+
+app.get('/api/feedback', (req, res) => {
+  const items = globalThis.__pdfyFeedbacks || [];
+  res.json(items);
 });
 
 const PORT = 5001;

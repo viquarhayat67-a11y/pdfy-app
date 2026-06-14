@@ -1,24 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-const STORAGE_KEY = 'pdfy_feedback_submissions';
-
-function readSubmissions() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-function writeSubmissions(items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
+import { FEEDBACK_STORAGE_KEY, readSubmissions, writeSubmissions } from '../lib/feedbackStorage';
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
+
 
 export default function UserFeedback({ onBack }) {
   const [feature, setFeature] = useState('');
@@ -78,8 +65,9 @@ export default function UserFeedback({ onBack }) {
     return '';
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
+
     const err = validate();
     if (err) {
       setSubmittedToast(err);
@@ -95,20 +83,38 @@ export default function UserFeedback({ onBack }) {
       createdAt: Date.now(),
     };
 
+    // Always persist locally (so UX works even if backend is unavailable)
     const current = readSubmissions();
-    // Keep a reasonable local cap
     const next = [...current, payload].slice(-100);
     writeSubmissions(next);
+    window.dispatchEvent(new Event('pdfy_feedback_added'));
+
+    // Best-effort backend capture
+    let backendOk = false;
+    try {
+      const resp = await fetch('http://127.0.0.1:5001/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      backendOk = resp.ok;
+    } catch {
+      backendOk = false;
+    }
 
     setFeature('');
     setRating(5);
     setMessage('');
     setEmail('');
 
-    setSubmittedToast('Thanks! Your feedback has been saved locally on this device.');
-    window.dispatchEvent(new Event('pdfy_feedback_added'));
+    setSubmittedToast(
+      backendOk
+        ? 'Thanks! Your feedback has been saved (backend + local).'
+        : 'Thanks! Your feedback has been saved locally on this device (backend unavailable).'
+    );
 
     setTimeout(() => setSubmittedToast(''), 4500);
+
   };
 
   return (
@@ -312,11 +318,12 @@ export default function UserFeedback({ onBack }) {
             <button
               type="button"
               onClick={() => {
-                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(FEEDBACK_STORAGE_KEY);
                 setSubmissions([]);
                 setSubmittedToast('Cleared local feedback submissions on this device.');
                 setTimeout(() => setSubmittedToast(''), 3000);
               }}
+
               style={{
                 marginLeft: 'auto',
                 backgroundColor: '#fff',
