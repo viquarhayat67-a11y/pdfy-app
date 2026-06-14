@@ -72,20 +72,27 @@ export default function PassportPhotoMaker() {
     ctx.drawImage(img, startX, startY, drawW, drawH);
   };
 
-  // Drag and drop image adjustment event listeners
-  const handleMouseDown = (e) => {
+  // Drag and drop image adjustment event listeners (Pointer Events for mobile + desktop)
+  const handlePointerDown = (e) => {
     if (!imageSrc) return;
+    // Prevent scrolling while dragging on touch devices.
+    e.preventDefault?.();
     setIsDragging(true);
     setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
   };
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging) return;
+    e.preventDefault?.();
     setOffsetX(e.clientX - dragStart.x);
     setOffsetY(e.clientY - dragStart.y);
   };
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handlePointerUp = (e) => {
+    e?.preventDefault?.();
+    setIsDragging(false);
+  };
+
 
   // Generates a 4x6 inch standard canvas sheet matrix containing 6 aligned duplicates
   const generatePrintSheet = () => {
@@ -159,11 +166,12 @@ export default function PassportPhotoMaker() {
               </div>
 
               <div>
-                <label style={{ display: 'flex', justifyContent: 'between', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
                   Scale / Zoom Adjustment Slider
                 </label>
                 <input type="range" min="0.5" max="3" step="0.01" value={scale} onChange={(e) => setScale(parseFloat(e.target.value))} style={{ width: '100%', cursor: 'pointer' }} />
               </div>
+
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button onClick={() => downloadImage(null, null)} style={{ flex: 1, backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>
@@ -192,10 +200,11 @@ export default function PassportPhotoMaker() {
                 height: `${currentDim.height / 1.5}px`,
                 position: 'relative'
               }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+
             >
               {/* Overlay guides to assist centering eyes and chin structure alignment */}
               <div style={{ position: 'absolute', top: '0', left: '50%', width: '1px', height: '100%', borderLeft: '1px dashed rgba(37,99,235,0.3)', pointerEvents: 'none' }} />
