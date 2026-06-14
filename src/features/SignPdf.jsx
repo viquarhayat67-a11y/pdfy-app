@@ -8,6 +8,7 @@ export default function SignPdf({ pdfLibLoaded, onBack }) {
 
   // Canvas drawing mechanisms
   const startDrawing = (e) => {
+    e.preventDefault?.();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
@@ -17,6 +18,7 @@ export default function SignPdf({ pdfLibLoaded, onBack }) {
   };
 
   const draw = (e) => {
+    e.preventDefault?.();
     if (!isDrawing.current) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -27,7 +29,9 @@ export default function SignPdf({ pdfLibLoaded, onBack }) {
     ctx.stroke();
   };
 
+
   const stopDrawing = () => { isDrawing.current = false; };
+
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -95,10 +99,14 @@ export default function SignPdf({ pdfLibLoaded, onBack }) {
           <div style={{ textAlign: 'center' }}>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '8px', textAlign: 'left' }}>Draw Signature inside panel box:</span>
             <canvas 
-              ref={canvasRef} width={300} height={120} 
-              onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
-              style={{ border: '1px solid #cbd5e1', backgroundColor: '#fff', borderRadius: '8px', cursor: 'crosshair', display: 'block', width: '100%' }}
+              ref={canvasRef} width={300} height={120}
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); startDrawing(e); }}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerCancel={stopDrawing}
+              style={{ border: '1px solid #cbd5e1', backgroundColor: '#fff', borderRadius: '8px', cursor: 'crosshair', display: 'block', width: '100%', touchAction: 'none' }}
             />
+
             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
               <button onClick={clearCanvas} style={{ flex: 1, padding: '8px', cursor: 'pointer', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '6px', fontWeight: '600' }}>Clear Pad</button>
               <button onClick={handleSignPdf} disabled={isProcessing} style={{ flex: 2, padding: '8px', cursor: 'pointer', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', fontWeight: '600' }}>
