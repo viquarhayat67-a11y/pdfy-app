@@ -18,6 +18,7 @@ import HistoryLog from './components/HistoryLog';
 import ProtectPdf from './features/ProtectPdf';
 import PdfToImage from './features/PdfToImage';
 import PassportPhotoMaker from './features/PassportPhotoMaker';
+import UserFeedback from './components/UserFeedback';
 
 
 const useScript = (url) => {
@@ -68,6 +69,7 @@ export default function App() {
     { id: 'ocr', category: 'Security & Integrity', name: 'Run OCR Text Extractor', icon: '🔍', desc: 'Extract editable text character data from flattened image assets.' },
     { id: 'pdfToImage', category: 'Conversions', name: 'PDF to Image', icon: '📸', desc: 'Convert each page of a PDF document into high-quality image files.' },
     { id: 'passportPhoto', category: 'Conversions', name: 'Passport Photo Maker', icon: '🛂', desc: 'Create compliant passport photos with automatic face detection and cropping.' },
+    { id: 'feedback', category: 'Security & Integrity', name: 'User Feedback & Review', icon: '🗣️', desc: 'Submit feature requests and reviews to improve PDFy.' },
   ];
 
   const categories = ['Conversions', 'Page Modifiers', 'Security & Integrity'];
@@ -113,8 +115,10 @@ export default function App() {
             <PdfToImage pdfJsLoaded={pdfJsLoaded} onBack={() => setActiveTool(null)} />
           ) :activeTool === 'protect' ? (
             <ProtectPdf pdfLibLoaded={pdfLibLoaded} onBack={() => setActiveTool(null)} />
-           ) :activeTool === 'metadata' ? (
+          ) : activeTool === 'metadata' ? (
             <MetadataPdf onBack={() => setActiveTool(null)} /> 
+          ) : activeTool === 'feedback' ? (
+            <UserFeedback onBack={() => setActiveTool(null)} />
           ) :(
             <div style={{ color: '#64748b', textAlign: 'center' }}>
               <h3 style={{ fontSize: '17px', color: '#334155', margin: 0, fontWeight: '600' }}>Select a utility from the list below to launch a processing workshop.</h3>
