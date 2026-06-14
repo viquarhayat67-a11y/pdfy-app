@@ -24,20 +24,22 @@ export default function SplitPdf({ pdfLibLoaded, onBack }) {
   // Helper to parse strings like "1, 3-5, 7" into an array of page numbers [1, 3, 4, 5, 7]
   const parsePageRange = (rangeStr, maxPages) => {
     const pages = new Set();
-    const tokens = rangeStr.split(',');
+    const tokens = String(rangeStr).split(',');
 
     for (let token of tokens) {
       token = token.trim();
       if (token.includes('-')) {
-        const [start, end] = token.split('-').map(num => parseInt(num.trim(), 10));
-        if (start && end && start <= end) {
+        const [startRaw, endRaw] = token.split('-');
+        const start = parseInt(String(startRaw).trim(), 10);
+        const end = parseInt(String(endRaw).trim(), 10);
+        if (Number.isFinite(start) && Number.isFinite(end) && start <= end) {
           for (let i = start; i <= end; i++) {
             if (i >= 1 && i <= maxPages) pages.add(i);
           }
         }
       } else {
         const num = parseInt(token, 10);
-        if (num >= 1 && num <= maxPages) pages.add(num);
+        if (Number.isFinite(num) && num >= 1 && num <= maxPages) pages.add(num);
       }
     }
     return Array.from(pages).sort((a, b) => a - b);
@@ -45,6 +47,10 @@ export default function SplitPdf({ pdfLibLoaded, onBack }) {
 
   const handleSplit = async () => {
     if (!file || !pageRange) return;
+    if (!window.PDFLib || !window.PDFLib.PDFDocument) {
+      alert('PDF library is not loaded. Please wait and try again.');
+      return;
+    }
     setIsProcessing(true);
 
     try {
@@ -67,8 +73,13 @@ export default function SplitPdf({ pdfLibLoaded, onBack }) {
 
       const newPdfBytes = await newPdf.save();
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-      addHistoryLog('Page Splitter', file.name, '✂️', `Pages: ${pageSelection}`);
-      
+      addHistoryLog(
+        'Page Splitter',
+        file.name,
+        '✂️',
+        `Pages: ${pageRange.trim() || targetPages.join(', ')}`
+      );
+
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `extracted_${file.name}`;
