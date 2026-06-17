@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // ALL ACTIVE UTILITIES
 import ImageToPdf from './features/ImageToPdf';
@@ -149,6 +150,7 @@ export default function App() {
         <HistoryLog />
       </main>
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
